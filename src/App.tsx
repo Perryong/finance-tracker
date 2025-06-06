@@ -33,7 +33,7 @@ const App = () => {
                 user ? (
                   <Index />
                 ) : (
-                  <Navigate to="/login" replace />
+                  <Navigate to="/login\" replace />
                 )
               } 
             />
