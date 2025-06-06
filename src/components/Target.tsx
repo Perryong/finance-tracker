@@ -47,7 +47,7 @@ export const Target = () => {
   const finalEmergencyFundGoal = emergencyFundGoal ?? 0;
   
   // Calculate progress
-  const amountNeeded = Math.max(0, finalEmergencyFundGoal - totalSavings);
+  const amountNeeded = Math.max(0, finalEmergencyFundGoal - currentBalance);
   const progressPercentage = finalEmergencyFundGoal > 0 ? Math.min(100, (currentBalance / finalEmergencyFundGoal) * 100) : 0;
   
   // Calculate estimated time to goal based on monthly contribution
