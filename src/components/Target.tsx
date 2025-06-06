@@ -46,13 +46,12 @@ export const Target = () => {
   const monthlyIncome = monthlyIncomeTarget ?? 0;
   const finalEmergencyFundGoal = emergencyFundGoal ?? 0;
   
-  // Calculate progress
+  // Calculate progress based on total savings only
   const amountNeeded = Math.max(0, finalEmergencyFundGoal - totalSavings);
-  const progressPercentage = finalEmergencyFundGoal > 0 ? Math.min(100, (currentBalance / finalEmergencyFundGoal) * 100) : 0;
+  const progressPercentage = finalEmergencyFundGoal > 0 ? Math.min(100, (totalSavings / finalEmergencyFundGoal) * 100) : 0;
   
-  // Calculate estimated time to goal based on monthly contribution
-  const remainingAmount = Math.max(0, finalEmergencyFundGoal - totalSavings);
-  const monthsToGoal = monthlyContribution > 0 ? Math.ceil(remainingAmount / monthlyContribution) : 0;
+  // Calculate estimated time to goal based on monthly contribution and remaining amount
+  const monthsToGoal = monthlyContribution > 0 ? Math.ceil(amountNeeded / monthlyContribution) : 0;
 
   const handleMonthlyIncomeChange = (value: number) => {
     setMonthlyIncomeTarget(value);
