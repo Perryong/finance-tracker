@@ -39,20 +39,19 @@ export const Target = () => {
   const netBalance = totalIncome - totalExpenses;
   const monthlyContribution = savingAmount ?? netBalance;
   
-  // Use total savings plus monthly contribution for current balance
-  const currentBalance = totalSavings + monthlyContribution;
+  // Current balance is the total savings
+  const currentBalance = totalSavings;
   
   // Use user-defined values only - no auto-calculation
   const monthlyIncome = monthlyIncomeTarget ?? 0;
   const finalEmergencyFundGoal = emergencyFundGoal ?? 0;
   
-  // Calculate progress
+  // Calculate progress based on current total savings
   const amountNeeded = Math.max(0, finalEmergencyFundGoal - currentBalance);
   const progressPercentage = finalEmergencyFundGoal > 0 ? Math.min(100, (currentBalance / finalEmergencyFundGoal) * 100) : 0;
   
   // Calculate estimated time to goal based on monthly contribution
-  const remainingAmount = Math.max(0, finalEmergencyFundGoal - totalSavings);
-  const monthsToGoal = monthlyContribution > 0 ? Math.ceil(remainingAmount / monthlyContribution) : 0;
+  const monthsToGoal = monthlyContribution > 0 ? Math.ceil(amountNeeded / monthlyContribution) : 0;
 
   const handleMonthlyIncomeChange = (value: number) => {
     setMonthlyIncomeTarget(value);
