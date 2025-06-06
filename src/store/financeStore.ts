@@ -8,9 +8,6 @@ export interface Transaction {
   date: string;
   notes?: string;
   type: 'income' | 'expense';
-  isRecurring?: boolean;
-  dueDate?: string;
-  isUnusual?: boolean;
 }
 
 export interface Category {
@@ -40,28 +37,15 @@ interface FinanceState {
 }
 
 const defaultCategories: Category[] = [
-  // Income Categories
-  { id: '1', name: 'Salary', color: '#10b981', type: 'income' },
-  { id: '2', name: 'Investments', color: '#06b6d4', type: 'income' },
-  { id: '3', name: 'Freelance', color: '#8b5cf6', type: 'income' },
-  { id: '4', name: 'Bonus', color: '#f59e0b', type: 'income' },
-  { id: '5', name: 'Other Income', color: '#64748b', type: 'income' },
-  
-  // Expense Categories
-  { id: '6', name: 'Housing', color: '#ef4444', type: 'expense' },
-  { id: '7', name: 'Utilities', color: '#f97316', type: 'expense' },
-  { id: '8', name: 'Groceries', color: '#22c55e', type: 'expense' },
-  { id: '9', name: 'Transportation', color: '#3b82f6', type: 'expense' },
-  { id: '10', name: 'Entertainment', color: '#ec4899', type: 'expense' },
-  { id: '11', name: 'Healthcare', color: '#8b5cf6', type: 'expense' },
-  { id: '12', name: 'Insurance', color: '#64748b', type: 'expense' },
-  { id: '13', name: 'Savings', color: '#0ea5e9', type: 'expense' },
-  { id: '14', name: 'Investments', color: '#6366f1', type: 'expense' },
-  { id: '15', name: 'Dining Out', color: '#f43f5e', type: 'expense' },
-  { id: '16', name: 'Shopping', color: '#a855f7', type: 'expense' },
-  { id: '17', name: 'Education', color: '#0d9488', type: 'expense' },
-  { id: '18', name: 'Debt Payment', color: '#dc2626', type: 'expense' },
-  { id: '19', name: 'Other Expenses', color: '#71717a', type: 'expense' }
+  { id: '1', name: 'Food', color: '#ef4444', type: 'expense' },
+  { id: '2', name: 'Transport', color: '#f97316', type: 'expense' },
+  { id: '3', name: 'Entertainment', color: '#eab308', type: 'expense' },
+  { id: '4', name: 'Shopping', color: '#22c55e', type: 'expense' },
+  { id: '5', name: 'Bills', color: '#3b82f6', type: 'expense' },
+  { id: '6', name: 'Healthcare', color: '#8b5cf6', type: 'expense' },
+  { id: '7', name: 'Salary', color: '#10b981', type: 'income' },
+  { id: '8', name: 'Freelance', color: '#06b6d4', type: 'income' },
+  { id: '9', name: 'Investment', color: '#8b5cf6', type: 'income' },
 ];
 
 export const useFinanceStore = create<FinanceState>()(
