@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { createTransactionWithDebug } from '@/lib/supabaseDebug';
 
 export interface Transaction {
   id: string;
@@ -25,7 +26,7 @@ interface FinanceState {
   emergencyFundGoal: number | null;
   savingAmount: number | null;
   totalSavings: number;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
   addCategory: (category: Omit<Category, 'id'>) => void;
@@ -60,13 +61,33 @@ export const useFinanceStore = create<FinanceState>()(
       emergencyFundGoal: null,
       savingAmount: null,
       totalSavings: 0,
-      addTransaction: (transaction) =>
-        set((state) => ({
-          transactions: [
-            ...state.transactions,
-            { ...transaction, id: Date.now().toString() },
-          ],
-        })),
+      addTransaction: async (transaction) => {
+        try {
+          console.log('🔄 Adding transaction via store:', transaction);
+          
+          // Use the debug-enabled transaction creation
+          const savedTransaction = await createTransactionWithDebug(transaction);
+          
+          // Add to local state with the returned ID
+          set((state) => ({
+            transactions: [
+              ...state.transactions,
+              {
+                ...transaction,
+                id: savedTransaction.id,
+                amount: savedTransaction.amount
+              },
+            ],
+          }));
+          
+          console.log('✅ Transaction added to store successfully');
+          
+        } catch (error) {
+          console.error('❌ Failed to add transaction:', error);
+          // Don't add to local state if Supabase insertion failed
+          throw error;
+        }
+      },
       updateTransaction: (id, updates) =>
         set((state) => ({
           transactions: state.transactions.map((t) =>

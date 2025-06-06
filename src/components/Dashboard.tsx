@@ -6,12 +6,14 @@ import { DoughnutChart } from './DoughnutChart';
 import { LineChart } from './LineChart';
 import { TransactionModal } from './TransactionModal';
 import { InlineEdit } from './InlineEdit';
+import { DebugPanel } from './DebugPanel';
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
-import { Plus, TrendingUp, TrendingDown, DollarSign, PiggyBank } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, PiggyBank, Bug } from 'lucide-react';
 
 export const Dashboard = () => {
   const { transactions, categories, savingAmount, setSavingAmount, totalSavings, setTotalSavings } = useFinanceStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [showDebugPanel, setShowDebugPanel] = React.useState(false);
   
   const currentMonth = new Date();
   const monthStart = startOfMonth(currentMonth);
@@ -59,11 +61,28 @@ export const Dashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600">{format(currentMonth, 'MMMM yyyy')}</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Transaction
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setShowDebugPanel(!showDebugPanel)} 
+            variant="outline"
+            size="sm"
+          >
+            <Bug className="h-4 w-4 mr-2" />
+            Debug
+          </Button>
+          <Button onClick={() => setIsModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Transaction
+          </Button>
+        </div>
       </div>
+
+      {/* Debug Panel */}
+      {showDebugPanel && (
+        <div className="mb-6">
+          <DebugPanel />
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
