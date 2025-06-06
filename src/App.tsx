@@ -48,7 +48,7 @@ const App = () => {
                 isAuthenticated ? (
                   <Index />
                 ) : (
-                  <Navigate to="/auth\" replace />
+                  <Navigate to="/auth" replace />
                 )
               }
             />
@@ -58,7 +58,7 @@ const App = () => {
                 !isAuthenticated ? (
                   <Auth />
                 ) : (
-                  <Navigate to="/\" replace />
+                  <Navigate to="/" replace />
                 )
               }
             />
