@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,7 +15,6 @@ interface EmergencyFundDetailsTableProps {
   handleMonthlyIncomeChange: (value: number) => void;
   handleEmergencyFundGoalChange: (value: number) => void;
   handleSavingAmountChange: (value: number) => void;
-  resetSavingAmountToAuto: () => void;
 }
 
 export const EmergencyFundDetailsTable: React.FC<EmergencyFundDetailsTableProps> = ({
@@ -29,7 +27,6 @@ export const EmergencyFundDetailsTable: React.FC<EmergencyFundDetailsTableProps>
   handleMonthlyIncomeChange,
   handleEmergencyFundGoalChange,
   handleSavingAmountChange,
-  resetSavingAmountToAuto
 }) => {
   return (
     <Card>
@@ -78,13 +75,11 @@ export const EmergencyFundDetailsTable: React.FC<EmergencyFundDetailsTableProps>
                 <InlineEdit
                   value={currentBalance}
                   onSave={handleSavingAmountChange}
-                  onReset={resetSavingAmountToAuto}
-                  showResetButton={savingAmount !== null}
                 />
               </TableCell>
               <TableCell className="text-right">
                 <span className={savingAmount !== null ? 'text-green-600' : 'text-gray-600'}>
-                  {savingAmount !== null ? 'User-set' : 'Auto-calculated'}
+                  Total accumulated savings
                 </span>
               </TableCell>
             </TableRow>

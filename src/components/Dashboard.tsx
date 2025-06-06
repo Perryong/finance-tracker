@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { Plus, TrendingUp, TrendingDown, DollarSign, PiggyBank } from 'lucide-react';
 
 export const Dashboard = () => {
-  const { transactions, categories, savingAmount, setSavingAmount } = useFinanceStore();
+  const { transactions, categories, savingAmount, setSavingAmount, totalSavings, setTotalSavings } = useFinanceStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   
   const currentMonth = new Date();
@@ -49,8 +48,8 @@ export const Dashboard = () => {
     setSavingAmount(value);
   };
 
-  const resetSavingAmountToAuto = () => {
-    setSavingAmount(null);
+  const handleTotalSavingsChange = (value: number) => {
+    setTotalSavings(value);
   };
 
   return (
@@ -67,7 +66,7 @@ export const Dashboard = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Monthly Income</CardTitle>
@@ -114,11 +113,27 @@ export const Dashboard = () => {
               <InlineEdit
                 value={displaySavingAmount}
                 onSave={handleSavingAmountChange}
-                onReset={resetSavingAmountToAuto}
-                showResetButton={savingAmount !== null}
               />
               <p className="text-xs text-gray-500">
                 {savingAmount !== null ? 'User-set monthly target' : 'Auto-calculated from monthly net balance'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-indigo-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total Savings</CardTitle>
+            <PiggyBank className="h-4 w-4 text-indigo-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <InlineEdit
+                value={totalSavings}
+                onSave={handleTotalSavingsChange}
+              />
+              <p className="text-xs text-gray-500">
+                Total accumulated savings
               </p>
             </div>
           </CardContent>

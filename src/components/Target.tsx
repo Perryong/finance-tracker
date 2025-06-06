@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { useFinanceStore } from '@/store/financeStore';
-import { startOfMonth, endOfMonth, subMonths, isWithinInterval, format } from 'date-fns';
+import { startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ProgressOverview } from '@/components/target/ProgressOverview';
 import { EmergencyFundDetailsTable } from '@/components/target/EmergencyFundDetailsTable';
 import { RecommendationsCard } from '@/components/target/RecommendationsCard';
@@ -13,9 +12,11 @@ export const Target = () => {
     monthlyIncomeTarget, 
     emergencyFundGoal,
     savingAmount,
+    totalSavings,
     setMonthlyIncomeTarget,
     setEmergencyFundGoal,
-    setSavingAmount
+    setSavingAmount,
+    setTotalSavings
   } = useFinanceStore();
 
   // Calculate monthly savings from dashboard logic
@@ -36,24 +37,22 @@ export const Target = () => {
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     
   const netBalance = totalIncome - totalExpenses;
-  const dashboardMonthlySavings = savingAmount ?? netBalance;
-
-  // Calculate current balance by adding dashboard monthly savings to any existing savings
-  const baseBalance = savingAmount ? 0 : transactions.reduce((sum, t) => sum + t.amount, 0);
-  const currentBalance = baseBalance + dashboardMonthlySavings;
+  const monthlyContribution = savingAmount ?? netBalance;
+  
+  // Use total savings plus monthly contribution for current balance
+  const currentBalance = totalSavings + monthlyContribution;
   
   // Use user-defined values only - no auto-calculation
   const monthlyIncome = monthlyIncomeTarget ?? 0;
   const finalEmergencyFundGoal = emergencyFundGoal ?? 0;
   
-  console.log('Emergency fund goal:', finalEmergencyFundGoal);
-  
   // Calculate progress
   const amountNeeded = Math.max(0, finalEmergencyFundGoal - currentBalance);
   const progressPercentage = finalEmergencyFundGoal > 0 ? Math.min(100, (currentBalance / finalEmergencyFundGoal) * 100) : 0;
   
-  // Calculate estimated time to goal: Emergency fund goal / current saving balance
-  const monthsToGoal = currentBalance > 0 ? Math.ceil(finalEmergencyFundGoal / currentBalance) : 0;
+  // Calculate estimated time to goal based on monthly contribution
+  const remainingAmount = Math.max(0, finalEmergencyFundGoal - totalSavings);
+  const monthsToGoal = monthlyContribution > 0 ? Math.ceil(remainingAmount / monthlyContribution) : 0;
 
   const handleMonthlyIncomeChange = (value: number) => {
     setMonthlyIncomeTarget(value);
@@ -64,12 +63,7 @@ export const Target = () => {
   };
 
   const handleSavingAmountChange = (value: number) => {
-    // Update the base savings amount, current balance will recalculate automatically
-    setSavingAmount(value - dashboardMonthlySavings);
-  };
-
-  const resetSavingAmountToAuto = () => {
-    setSavingAmount(null);
+    setTotalSavings(value);
   };
 
   return (
@@ -92,11 +86,10 @@ export const Target = () => {
         monthsToGoal={monthsToGoal}
         monthlyIncomeTarget={monthlyIncomeTarget}
         emergencyFundGoal={emergencyFundGoal}
-        savingAmount={currentBalance}
+        savingAmount={savingAmount}
         handleMonthlyIncomeChange={handleMonthlyIncomeChange}
         handleEmergencyFundGoalChange={handleEmergencyFundGoalChange}
         handleSavingAmountChange={handleSavingAmountChange}
-        resetSavingAmountToAuto={resetSavingAmountToAuto}
       />
 
       <RecommendationsCard

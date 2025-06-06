@@ -24,6 +24,7 @@ interface FinanceState {
   monthlyIncomeTarget: number | null;
   emergencyFundGoal: number | null;
   savingAmount: number | null;
+  totalSavings: number;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
@@ -34,6 +35,7 @@ interface FinanceState {
   setMonthlyIncomeTarget: (amount: number | null) => void;
   setEmergencyFundGoal: (amount: number | null) => void;
   setSavingAmount: (amount: number | null) => void;
+  setTotalSavings: (amount: number) => void;
 }
 
 const defaultCategories: Category[] = [
@@ -57,6 +59,7 @@ export const useFinanceStore = create<FinanceState>()(
       monthlyIncomeTarget: null,
       emergencyFundGoal: null,
       savingAmount: null,
+      totalSavings: 0,
       addTransaction: (transaction) =>
         set((state) => ({
           transactions: [
@@ -106,6 +109,10 @@ export const useFinanceStore = create<FinanceState>()(
       setSavingAmount: (amount) =>
         set(() => ({
           savingAmount: amount,
+        })),
+      setTotalSavings: (amount) =>
+        set(() => ({
+          totalSavings: amount,
         })),
     }),
     {
