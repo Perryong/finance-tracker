@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '@/lib/supabase';
 
 export interface Transaction {
   id: string;
@@ -25,12 +26,12 @@ interface FinanceState {
   emergencyFundGoal: number | null;
   savingAmount: number | null;
   totalSavings: number;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
-  updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
-  deleteTransaction: (id: string) => void;
-  addCategory: (category: Omit<Category, 'id'>) => void;
-  updateCategory: (id: string, category: Partial<Category>) => void;
-  deleteCategory: (id: string) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  updateTransaction: (id: string, transaction: Partial<Transaction>) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
+  addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
+  updateCategory: (id: string, category: Partial<Category>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
   toggleTheme: () => void;
   setMonthlyIncomeTarget: (amount: number | null) => void;
   setEmergencyFundGoal: (amount: number | null) => void;
@@ -60,40 +61,112 @@ export const useFinanceStore = create<FinanceState>()(
       emergencyFundGoal: null,
       savingAmount: null,
       totalSavings: 0,
-      addTransaction: (transaction) =>
+      addTransaction: async (transaction) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { data, error } = await supabase
+          .from('transactions')
+          .insert({
+            ...transaction,
+            user_id: user.id,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        
         set((state) => ({
-          transactions: [
-            ...state.transactions,
-            { ...transaction, id: Date.now().toString() },
-          ],
-        })),
-      updateTransaction: (id, updates) =>
+          transactions: [...state.transactions, data],
+        }));
+      },
+      updateTransaction: async (id, updates) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { error } = await supabase
+          .from('transactions')
+          .update(updates)
+          .eq('id', id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
         set((state) => ({
           transactions: state.transactions.map((t) =>
             t.id === id ? { ...t, ...updates } : t
           ),
-        })),
-      deleteTransaction: (id) =>
+        }));
+      },
+      deleteTransaction: async (id) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { error } = await supabase
+          .from('transactions')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
         set((state) => ({
           transactions: state.transactions.filter((t) => t.id !== id),
-        })),
-      addCategory: (category) =>
+        }));
+      },
+      addCategory: async (category) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { data, error } = await supabase
+          .from('categories')
+          .insert({
+            ...category,
+            user_id: user.id,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
         set((state) => ({
-          categories: [
-            ...state.categories,
-            { ...category, id: Date.now().toString() },
-          ],
-        })),
-      updateCategory: (id, updates) =>
+          categories: [...state.categories, data],
+        }));
+      },
+      updateCategory: async (id, updates) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { error } = await supabase
+          .from('categories')
+          .update(updates)
+          .eq('id', id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
         set((state) => ({
           categories: state.categories.map((c) =>
             c.id === id ? { ...c, ...updates } : c
           ),
-        })),
-      deleteCategory: (id) =>
+        }));
+      },
+      deleteCategory: async (id) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { error } = await supabase
+          .from('categories')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
         set((state) => ({
           categories: state.categories.filter((c) => c.id !== id),
-        })),
+        }));
+      },
       toggleTheme: () =>
         set((state) => ({
           theme: state.theme === 'light' ? 'dark' : 'light',
