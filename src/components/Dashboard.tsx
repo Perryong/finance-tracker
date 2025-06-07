@@ -11,9 +11,24 @@ import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { Plus, TrendingUp, TrendingDown, DollarSign, PiggyBank, Bug } from 'lucide-react';
 
 export const Dashboard = () => {
-  const { transactions, categories, savingAmount, setSavingAmount, totalSavings, setTotalSavings } = useFinanceStore();
+  const { 
+    transactions, 
+    categories, 
+    savingAmount, 
+    setSavingAmount, 
+    totalSavings, 
+    setTotalSavings,
+    loadTransactions,
+    loadCategories
+  } = useFinanceStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [showDebugPanel, setShowDebugPanel] = React.useState(false);
+  
+  // Load data on component mount
+  React.useEffect(() => {
+    loadTransactions();
+    loadCategories();
+  }, [loadTransactions, loadCategories]);
   
   const currentMonth = new Date();
   const monthStart = startOfMonth(currentMonth);

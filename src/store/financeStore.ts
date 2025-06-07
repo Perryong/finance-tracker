@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { createTransactionWithDebug } from '@/lib/supabaseDebug';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/components/ui/use-toast';
 
 export interface Transaction {
   id: string;
@@ -37,6 +38,8 @@ interface FinanceState {
   setEmergencyFundGoal: (amount: number | null) => void;
   setSavingAmount: (amount: number | null) => void;
   setTotalSavings: (amount: number) => void;
+  loadTransactions: () => Promise<void>;
+  loadCategories: () => Promise<void>;
 }
 
 const defaultCategories: Category[] = [
@@ -61,60 +64,286 @@ export const useFinanceStore = create<FinanceState>()(
       emergencyFundGoal: null,
       savingAmount: null,
       totalSavings: 0,
-      addTransaction: async (transaction) => {
+      
+      loadTransactions: async () => {
         try {
-          console.log('🔄 Adding transaction via store:', transaction);
-          
-          // Use the debug-enabled transaction creation
-          const savedTransaction = await createTransactionWithDebug(transaction);
-          
-          // Add to local state with the returned ID
-          set((state) => ({
-            transactions: [
-              ...state.transactions,
-              {
-                ...transaction,
-                id: savedTransaction.id,
-                amount: savedTransaction.amount
-              },
-            ],
-          }));
-          
-          console.log('✅ Transaction added to store successfully');
-          
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          const { data, error } = await supabase
+            .from('transactions')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('date', { ascending: false });
+
+          if (error) {
+            console.error('Error loading transactions:', error);
+            return;
+          }
+
+          set({ transactions: data || [] });
         } catch (error) {
-          console.error('❌ Failed to add transaction:', error);
-          // Don't add to local state if Supabase insertion failed
-          throw error;
+          console.error('Failed to load transactions:', error);
         }
       },
-      updateTransaction: (id, updates) =>
-        set((state) => ({
-          transactions: state.transactions.map((t) =>
-            t.id === id ? { ...t, ...updates } : t
-          ),
-        })),
-      deleteTransaction: (id) =>
-        set((state) => ({
-          transactions: state.transactions.filter((t) => t.id !== id),
-        })),
-      addCategory: (category) =>
-        set((state) => ({
-          categories: [
-            ...state.categories,
-            { ...category, id: Date.now().toString() },
-          ],
-        })),
-      updateCategory: (id, updates) =>
-        set((state) => ({
-          categories: state.categories.map((c) =>
-            c.id === id ? { ...c, ...updates } : c
-          ),
-        })),
-      deleteCategory: (id) =>
-        set((state) => ({
-          categories: state.categories.filter((c) => c.id !== id),
-        })),
+
+      loadCategories: async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          const { data, error } = await supabase
+            .from('categories')
+            .select('*')
+            .eq('user_id', user.id);
+
+          if (error) {
+            console.error('Error loading categories:', error);
+            return;
+          }
+
+          if (data && data.length > 0) {
+            set({ categories: data });
+          }
+        } catch (error) {
+          console.error('Failed to load categories:', error);
+        }
+      },
+
+      addTransaction: async (transaction) => {
+        try {
+          console.log('Adding transaction:', transaction);
+          
+          // Get authenticated user
+          const { data: { user }, error: authError } = await supabase.auth.getUser();
+          
+          if (authError) {
+            console.error('Auth error:', authError);
+            toast({
+              title: "Authentication Error",
+              description: "Please sign in to add transactions.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          if (!user) {
+            console.error('No authenticated user');
+            toast({
+              title: "Authentication Required",
+              description: "Please sign in to add transactions.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          // Prepare transaction data
+          const transactionData = {
+            user_id: user.id,
+            amount: parseFloat(transaction.amount.toString()),
+            category: transaction.category,
+            date: transaction.date,
+            notes: transaction.notes || null,
+            type: transaction.type,
+            status: 'completed' as const,
+          };
+
+          console.log('Inserting transaction data:', transactionData);
+
+          // Insert into Supabase
+          const { data, error } = await supabase
+            .from('transactions')
+            .insert(transactionData)
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Supabase error:', error);
+            toast({
+              title: "Database Error",
+              description: `Failed to save transaction: ${error.message}`,
+              variant: "destructive",
+            });
+            return;
+          }
+
+          if (!data) {
+            console.error('No data returned from insert');
+            toast({
+              title: "Error",
+              description: "No data returned from database.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          console.log('Transaction saved successfully:', data);
+
+          // Add to local state
+          set((state) => ({
+            transactions: [data, ...state.transactions],
+          }));
+
+          toast({
+            title: "Success",
+            description: "Transaction added successfully!",
+          });
+
+        } catch (error) {
+          console.error('Failed to add transaction:', error);
+          toast({
+            title: "Error",
+            description: "Failed to add transaction. Please try again.",
+            variant: "destructive",
+          });
+        }
+      },
+
+      updateTransaction: async (id, updates) => {
+        try {
+          const { error } = await supabase
+            .from('transactions')
+            .update(updates)
+            .eq('id', id);
+
+          if (error) {
+            console.error('Error updating transaction:', error);
+            toast({
+              title: "Error",
+              description: "Failed to update transaction.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          set((state) => ({
+            transactions: state.transactions.map((t) =>
+              t.id === id ? { ...t, ...updates } : t
+            ),
+          }));
+
+          toast({
+            title: "Success",
+            description: "Transaction updated successfully!",
+          });
+        } catch (error) {
+          console.error('Failed to update transaction:', error);
+        }
+      },
+
+      deleteTransaction: async (id) => {
+        try {
+          const { error } = await supabase
+            .from('transactions')
+            .delete()
+            .eq('id', id);
+
+          if (error) {
+            console.error('Error deleting transaction:', error);
+            toast({
+              title: "Error",
+              description: "Failed to delete transaction.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          set((state) => ({
+            transactions: state.transactions.filter((t) => t.id !== id),
+          }));
+
+          toast({
+            title: "Success",
+            description: "Transaction deleted successfully!",
+          });
+        } catch (error) {
+          console.error('Failed to delete transaction:', error);
+        }
+      },
+
+      addCategory: async (category) => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          const categoryData = {
+            user_id: user.id,
+            name: category.name,
+            color: category.color,
+            type: category.type,
+          };
+
+          const { data, error } = await supabase
+            .from('categories')
+            .insert(categoryData)
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Error adding category:', error);
+            toast({
+              title: "Error",
+              description: "Failed to add category.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          set((state) => ({
+            categories: [...state.categories, data],
+          }));
+
+          toast({
+            title: "Success",
+            description: "Category added successfully!",
+          });
+        } catch (error) {
+          console.error('Failed to add category:', error);
+        }
+      },
+
+      updateCategory: async (id, updates) => {
+        try {
+          const { error } = await supabase
+            .from('categories')
+            .update(updates)
+            .eq('id', id);
+
+          if (error) {
+            console.error('Error updating category:', error);
+            return;
+          }
+
+          set((state) => ({
+            categories: state.categories.map((c) =>
+              c.id === id ? { ...c, ...updates } : c
+            ),
+          }));
+        } catch (error) {
+          console.error('Failed to update category:', error);
+        }
+      },
+
+      deleteCategory: async (id) => {
+        try {
+          const { error } = await supabase
+            .from('categories')
+            .delete()
+            .eq('id', id);
+
+          if (error) {
+            console.error('Error deleting category:', error);
+            return;
+          }
+
+          set((state) => ({
+            categories: state.categories.filter((c) => c.id !== id),
+          }));
+        } catch (error) {
+          console.error('Failed to delete category:', error);
+        }
+      },
+
       toggleTheme: () =>
         set((state) => ({
           theme: state.theme === 'light' ? 'dark' : 'light',

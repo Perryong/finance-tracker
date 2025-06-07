@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,9 +7,14 @@ import { format, parseISO } from 'date-fns';
 import { Edit, Trash2, Plus } from 'lucide-react';
 
 export const Transactions = () => {
-  const { transactions, deleteTransaction, categories } = useFinanceStore();
+  const { transactions, deleteTransaction, categories, loadTransactions } = useFinanceStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingTransaction, setEditingTransaction] = React.useState(null);
+
+  // Load transactions on component mount
+  React.useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
 
   // Group transactions by date
   const groupedTransactions = transactions.reduce((groups, transaction) => {
@@ -32,9 +36,9 @@ export const Transactions = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this transaction?')) {
-      deleteTransaction(id);
+      await deleteTransaction(id);
     }
   };
 
